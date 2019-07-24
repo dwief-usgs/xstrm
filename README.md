@@ -9,7 +9,7 @@ Daniel Wieferich: dwieferich@usgs.gov
 -----------
 Collaborators:
 -----------
-welcoming collaborators	  
+welcoming collaborators let me know if your interested via email or start contributing to the project through pull requests or posting feedback as an issue	  
 
 -----------
 Purpose:
@@ -27,7 +27,7 @@ Development Status:
 -------------------
 Software documented in this repository are unpublished and will be under continual development.  Collaborative efforts to help improve code and analyses are welcomed.
 
-
+ 
 
 # USGS Provisional Software
 
