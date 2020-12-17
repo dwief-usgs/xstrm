@@ -1,4 +1,4 @@
-"""Top-level package for upstream_calc."""
+"""Top-level package for xstrm."""
 
 __author__ = """Daniel Wieferich"""
 __email__ = 'dwieferich@usgs.gov'

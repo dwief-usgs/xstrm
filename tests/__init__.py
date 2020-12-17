@@ -1,1 +1,1 @@
-"""Unit test package for pymapcat."""
+"""Unit test package for xstrm."""

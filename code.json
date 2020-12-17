@@ -1,0 +1,48 @@
+[
+    {
+      "name": "xstrm",
+      "organization": "U.S. Geological Survey",
+      "description": "Python package to assist with stream network summarization.",
+      "version": "0.0.1",
+      "status": "Production",
+  
+      "permissions": {
+        "usageType": "openSource",
+        "licenses": [
+          {
+              "name": "unlicense",
+            "URL": "LICENSE"
+          }
+        ]
+      },
+  
+      "homepageURL": "",
+      "downloadURL": "",
+      "disclaimerURL": "./DISCLAIMER.md",
+      "repositoryURL": "",
+      "vcs": "git",
+  
+      "laborHours": 0,
+  
+      "tags": [
+        "Python",
+        "USGS",
+        "Science Analytics and Synthesis",
+        "National Climate Adaptation Science Center"
+      ],
+  
+      "languages": [
+        "Python"
+      ],
+  
+      "contact": {
+        "name": "Daniel Wieferich",
+        "email": "dwieferich@usgs.gov"
+      },
+  
+      "date": {
+        "metadataLastUpdated": "2020-11-30"
+      }
+    }
+  ]
+  
