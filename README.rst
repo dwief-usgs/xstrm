@@ -13,18 +13,20 @@ Contact
 
 Purpose
 -------
-Python package to assist with stream network summarization. This package is intended to support efforts for any stream network having general topology (i.e. to/from nodes). Specifically this package was built to support fisheries based analyses using multiple versions of the National Hydrography Database Plus (NHDPlus) representing streams within the United States along with HydroBasins which represent global drainage areas.
+As technology advances information about the landscapes around us is becoming more readily documented and made available in digital formats. Although abundant data are currently available, the raw forms of these data are not always useful for scientific research, but rather the information needs to be processed into appropriate spatial units for analyses. While studying streams, research suggests a stream and its condition can be characterized by accounting for the landscape draining to a stream segment and the landscape upstream and/or downstream of the stream segment (network). This Python package and associated command line tool, “network_calculator”, is intended to assist with up and down stream network summarization of variables assigned to a stream segment. Methods are built in a generalized way and are intended to support efforts for any stream network having general topology (i.e. to/from nodes). Specifically, this package was built to support fisheries based analyses using multiple versions of the National Hydrography Database Plus (NHDPlus) representing streams within the United States along with HydroBasins which represent global drainage areas.
 
 Terminology 
 -----------
-* Segment: The smallest unit represented within a network. This could represent a stream segment or local drainage unit.
+* Segment: The smallest unit represented within a stream network. This could represent a stream segment (i.e. line segment) or local drainage unit (i.e. polygon).
 
 * NHDPlus: The National Hydrography Dataset Plus network is commonly used to represent streams in the United States. There are several versions of this dataset, each having slightly different schemas.
 
 
 Currently Included 
 ------------------
-* Python methods and command line tool to support upstream or downstream summaries of information attributed to local stream segments or drainages. Summary types currently supported include sum, min, max, or weighted average.
+* Python methods (build_network.py, network_calc.py, xstrm.py) and command line tool (network_calculator.py) to support upstream or downstream summaries of information attributed to local stream segments or drainages. Summary types currently supported include sum, min, max, or weighted average.
+
+* Ability to export a complete network to hdf5 file format.
 
 * For a given network return all upstream or downstream segment or drainage identifiers.
 
@@ -38,13 +40,13 @@ Getting Started
 ---------------
 Install the package
 
-Soon users will be able to pip install from main branch
+Soon users will be able to pip install from main branch using the below command.  Users can install working branches by adding @branch_name
 * pip install git+https://github.com/dwief-usgs/xstrm.git
 
 
-All of the examples below will run as is assuming the file, 'test_local_data.csv', is locally accessible in a folder named 'tests' under the working directory. These data coorespond to the test network depicted in the file 'diagram_of_test_data.jpg'.  These data contain network to/from nodes alongside local data and expected data and therefore 'drop_cols' parameter is required to help remove unneeded information. 
+All of the examples below will run as-is assuming the file, 'tests/test_local_data.csv', is locally accessible in a folder named 'tests' under the working directory. These data coorespond to the test network depicted in the file 'diagram_of_test_data.jpg'.  These data contain network to/from nodes alongside local data and expected data and therefore 'drop_cols' parameter is required to help remove unneeded information. 
 
-**Example 1**  Using the network calculator command line tool.
+**Example 1**  Using the network calculator command line tool. The network calculator is intended to simplify use of xstrm methods.  The calculator has been tested in Linux command line and anaconda prompt on Windows.
 
 .. code-block::
 
@@ -119,8 +121,27 @@ All of the examples below will run as is assuming the file, 'test_local_data.csv
 
 
 
-**Example 2b** Get list of .
+**Example 2b** Retrieve numpy array of parents for a segment from hdf file.  
+
 .. code-block:: python
+
+    from xstrm import build_network
+    import h5py
+
+    # Use file from Example 2a
+    hdf_file = "tests/test.hd5"
+
+    with h5py.File(hdf_file,'r') as h5:
+        l10 = build_network.get_parents_hdf(h5, 10)
+    
+    print (l10)
+
+
+**Example 2b results** from print statement.  Displays list of parent index values for segment index 10. 
+
+.. code-block::
+
+    [ 1  2  3  4  5  6  7 10]
 
 
 
