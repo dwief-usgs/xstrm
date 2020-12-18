@@ -59,6 +59,7 @@ All of the examples below will run as is assuming the file, 'test_local_data.csv
 .. code-block:: python
 
     # Set user variables
+
     to_from_file = "tests/test_local_data.csv"
     id_col = "seg_id"
     to_node_col = "down_node"
@@ -67,6 +68,7 @@ All of the examples below will run as is assuming the file, 'test_local_data.csv
     include_seg = True
 
     # Get and prep network data
+
     build_network_data = build_network.import_tofrom_csv(
         to_from_file, id_col, to_node_col, from_node_col
     )
@@ -81,11 +83,13 @@ All of the examples below will run as is assuming the file, 'test_local_data.csv
     )
 
     # Print lists of segments with multiple parents, segments with one parent, and segments with no parents. Note in this example a parent represents upstream segments.  To/From nodes can be flipped in Example 2a to return parents representing downstream segments.
+    
     print (f"List of segment indicies with multiple parents: {network.multi_parent_ids}.")
     print (f"List of segment indicies with one parent: {network.one_parent_ids}.")
     print (f"List of segment indicies with no parents: {network.no_parent_ids}.")
 
     # Print relationship between index value ('xstrm_id') and user submitted identifier ('seg_id')
+
     print (build_network_data[1])
 
 **Example 2a results** of print statements. Note these lists are index values (referenced as 'xstrm_id') that are related to user ids ('seg_id' in this case).  The relationship between the ids is captured in the variable build_network_data[1].
