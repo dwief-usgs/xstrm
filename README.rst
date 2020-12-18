@@ -4,7 +4,6 @@ xstrm
 
 Python package to assist with stream network summarization.
 
-
 * Free software: unlicense
 
 Contact
@@ -12,15 +11,18 @@ Contact
 * Daniel Wieferich (dwieferich@usgs.gov)
 
 Purpose
--------
-As technology advances information about the landscapes around us is becoming more readily documented and made available in digital formats. Although abundant data are currently available, the raw forms of these data are not always useful for scientific research, but rather the information needs to be processed into appropriate spatial units for analyses. While studying streams, research suggests a stream and its condition can be characterized by accounting for the landscape draining to a stream segment and the landscape upstream and/or downstream of the stream segment (network). This Python package and associated command line tool, “network_calculator”, is intended to assist with up and down stream network summarization of variables assigned to a stream segment. Methods are built in a generalized way and are intended to support efforts for any stream network having general topology (i.e. to/from nodes). Specifically, this package was built to support fisheries based analyses using multiple versions of the National Hydrography Database Plus (NHDPlus) representing streams within the United States along with HydroBasins which represent global drainage areas.
+--------
+Abundant data are currently available to describe the landscapes around us, yet the raw forms of these data are not always useful for scientific research and needs to be processed into appropriate spatial units for analyses. While studying streams, research suggests a stream and its condition can be characterized by accounting for the landscape draining to a stream segment and the landscape upstream and or downstream of the stream segment (network). 
+
+This Python package and associated command line tool, 'network_calculator', is intended to assist with up and down stream network summarization of variables assigned to a stream segment. Methods are built in a generalized way and are intended to support efforts for any stream network having general topology i.e. to and from nodes.
+
+Specifically, this package was built to support fisheries based analyses using multiple versions of the National Hydrography Database Plus (NHDPlus) that represent streams within the United States along with HydroBasins which represent global drainage areas.
 
 Terminology 
 -----------
 * Segment: The smallest unit represented within a stream network. This could represent a stream segment (i.e. line segment) or local drainage unit (i.e. polygon).
 
 * NHDPlus: The National Hydrography Dataset Plus network is commonly used to represent streams in the United States. There are several versions of this dataset, each having slightly different schemas.
-
 
 Currently Included 
 ------------------
