@@ -124,6 +124,7 @@ def network_calc_to_csv(
     final_df = build_network.indx_to_id(
         out_df, indx_df, id_col_name, need="id_col_name"
     )
+    final_df.set_index([id_col_name], inplace=True)
     final_df.index.rename(id_col_name, inplace=True)
 
     if in_dir == "":
