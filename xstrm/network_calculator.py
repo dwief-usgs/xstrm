@@ -17,6 +17,7 @@ import timeit
 @click.option('--include_missing', required=False, show_default=True, default=True, help='Include calculation for percent of network with missing data for each variable')
 @click.option('--num_proc', required=False, show_default=True, default=4, help='Number of worker processes to use in multiprocessing')
 @click.option('--precision', required=False, show_default=True, default=3, help='Number of decimals to round float data')
+@click.option('--drop_cols', required=False, show_default=True, default=[], help='List of comma seperated strings reprenting field names to not include in network summary but are found in the local_data.csv file')
 def handle_data(
     to_from_csv,
     local_data_csv,
@@ -28,7 +29,8 @@ def handle_data(
     include_seg,
     include_missing,
     num_proc,
-    precision
+    precision,
+    drop_cols
 ):
     """Command line tool for up or down stream network summaries.
 
@@ -56,10 +58,11 @@ def handle_data(
         include_seg,
         include_missing,
         num_proc,
-        precision)
+        precision,
+        drop_cols)
 
     seconds = (timeit.default_timer() - t)
-    click.echo(f"Processing completed in approximately {seconds} seconds")
+    click.echo(f"Process completed in approximately {seconds} seconds")
 
 
 if __name__ == "__main__":

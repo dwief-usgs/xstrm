@@ -42,6 +42,8 @@ Soon users will be able to pip install from main branch
 * pip install git+https://github.com/dwief-usgs/xstrm.git
 
 
+All of the examples below will run as is assuming the file, 'test_local_data.csv', is locally accessible in a folder named 'tests' under the working directory. These data coorespond to the test network depicted in the file 'diagram_of_test_data.jpg'.  These data contain network to/from nodes alongside local data and expected data and therefore 'drop_cols' parameter is required to help remove unneeded information. 
+
 **Example 1**  Using the network calculator command line tool.
 
 .. code-block::
@@ -49,8 +51,75 @@ Soon users will be able to pip install from main branch
     # Access the help menu to see all parameter options and brief description of each
     python -m xstrm.network_calculator --help
 
-    # Example of how to run the code. User needs to update variables after each '='
-    python -m xstrm.network_calculator --to_from_csv=data/tofrom_file.csv --local_data_csv=data/test_data.csv --id_col_name=COMID --to_node_col=ToNode --from_node_col=FromNode
+    # Example of how to run the code. This example uses the 'test_local_data.csv' where both network and local data are available.  The process runs a 'sum' calculation by default on 'var1' and 'var2' columns of data.  Note, a number of columns are included in the csv that depict results and therefor we need to specificy drop_cols so that all columns are not calculated. 
+    python -m xstrm.network_calculator --to_from_csv=tests/test_local_data.csv --local_data_csv=tests/test_local_data.csv --id_col_name=seg_id --to_node_col=down_node --from_node_col=up_node --weight_col_name=area --drop_cols=["up_node","down_node","up_area","max_var1","max_var2","min_var1","min_var2","sum_var1","sum_var2","weighted_var1","weighted_var2","up_only_sum_var1","mn_var1","mn_var2"]
+
+
+**Example 2a** Use build_network methods to build and export the network to a local hdf file.
+.. code-block:: python
+
+    # Set user variables
+    to_from_file = "tests/test_local_data.csv"
+    id_col = "seg_id"
+    to_node_col = "down_node"
+    from_node_col = "up_node"
+    hdf_file = "tests/test.hd5"
+    include_seg = True
+
+    # Get and prep network data
+    build_network_data = build_network.import_tofrom_csv(
+        to_from_file, id_col, to_node_col, from_node_col
+    )
+
+    travers_queue = build_network.build_network_setup(
+        build_network_data[0]
+    )
+
+    # Build the network, export to hdf5 and build summary object containing information for network calculations
+    network = build_network.build_hdf_network(
+        traverse_queue, hdf_file, include_seg
+    )
+
+    # Print lists of segments with multiple parents, segments with one parent, and segments with no parents. Note in this example a parent represents upstream segments.  To/From nodes can be flipped in Example 2a to return parents representing downstream segments.
+    print (f"List of segment indicies with multiple parents: {network.multi_parent_ids}.")
+    print (f"List of segment indicies with one parent: {network.one_parent_ids}.")
+    print (f"List of segment indicies with no parents: {network.no_parent_ids}.")
+
+    # Print relationship between index value ('xstrm_id') and user submitted identifier ('seg_id')
+    print (build_network_data[1])
+
+**Example 2a results** of print statements. Note these lists are index values (referenced as 'xstrm_id') that are related to user ids ('seg_id' in this case).  The relationship between the ids is captured in the variable build_network_data[1].
+.. code-block::
+
+    List of segment indicies with multiple parents: [3, 6, 14, 7, 8, 10, 9, 11, 12, 13, 16].
+    List of segment indicies with one parent: [1, 2, 4, 5, 15, 17].
+    List of segment indicies with no parents: [].
+
+        seg_id  xstrm_id
+    0      01         1
+    1      02         2
+    2      03         3
+    3      04         4
+    4      05         5
+    5      06         6
+    6      07         7
+    7      08         8
+    8      09         9
+    9      10        10
+    10     11        11
+    11     12        12
+    12     13        13
+    13     14        14
+    14     15        15
+    15     16        16
+    16     17        17
+
+
+
+**Example 2b** Get list of .
+.. code-block:: python
+
+
 
 Copyright and License
 ---------------------

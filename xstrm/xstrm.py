@@ -27,7 +27,7 @@ def network_calc_to_csv(
     Use xstrm methods to process network summaries.
     This function builds a network from to from nodes
     and calculates network summaries for each segment,
-    where a segment can be a stream segment of catchment
+    where a segment can be a stream segment or catchment
     associated with the nodes. Exports data to csv.
 
     Parameters
@@ -120,7 +120,8 @@ def network_calc_to_csv(
 
     # rename index to be initial id submitted
     out_df = summary.final_df.round(precision)
-    # replace indx with identifier
+
+    # replace indx with user supplied identifier
     final_df = build_network.indx_to_id(
         out_df, indx_df, id_col_name, need="id_col_name"
     )
