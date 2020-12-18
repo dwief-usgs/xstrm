@@ -17,7 +17,8 @@ def network_calc_to_csv(
         include_seg=True,
         include_missing=True,
         num_proc=4,
-        precision=3
+        precision=3,
+        drop_cols=[]
 ):
     """Use xstrm package to process stream network summaries.
 
@@ -65,6 +66,10 @@ def network_calc_to_csv(
         Number of worker processes to use in multiprocessing
     precision: int
         number of decimal places to round float data
+    drop_cols: list
+        list of comma separated strings representing column names that
+        should not be processes during network_calc operations but are
+        in the local_data_csv
 
     Returns
     ----------
@@ -86,19 +91,21 @@ def network_calc_to_csv(
 
     in_dir, in_file = os.path.split(local_data_csv)
 
-    local_df = network_calc.get_local_vars(
-        local_data_csv, id_col_name, weight_col_name
-    )
-
-    build_network_data = build_network.import_tofrom(
+    build_network_data = build_network.import_tofrom_csv(
         to_from_csv, id_col_name, to_node_col, from_node_col
     )
 
     traverse_queue = build_network.build_network_setup(
-        build_network_data
+        build_network_data[0]
     )
 
-    summary = network_calc.build_network(
+    indx_df = build_network_data[1]
+
+    local_df = network_calc.get_local_vars_csv(
+        local_data_csv, indx_df, id_col_name, weight_col_name, drop_cols
+    )
+
+    summary = build_network.build_calc_network(
         traverse_queue, include_seg, num_proc=num_proc
     )
 
@@ -110,8 +117,13 @@ def network_calc_to_csv(
     summary.calc_no_parent()
     summary.calc_mult_parent_mp()
     summary.combine_dfs()
+
     # rename index to be initial id submitted
-    final_df = summary.final_df.round(precision)
+    out_df = summary.final_df.round(precision)
+    # replace indx with identifier
+    final_df = build_network.indx_to_id(
+        out_df, indx_df, id_col_name, need="id_col_name"
+    )
     final_df.index.rename(id_col_name, inplace=True)
 
     if in_dir == "":
@@ -119,4 +131,3 @@ def network_calc_to_csv(
     else:
         out_name = f"{in_dir}/n_{calc_type}_{in_file}"
     final_df.to_csv(out_name)
-

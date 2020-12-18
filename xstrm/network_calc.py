@@ -119,6 +119,8 @@ def get_local_vars_df(df,
         network_summary.py of the summarize_upstream module
 
     """
+    field_names = {}
+    required_cols = drop_cols + [id_col_name]
     if weight_col_name is not None:
         required_cols = drop_cols + [weight_col_name]
         field_names = {str(weight_col_name): "seg_weight"}
