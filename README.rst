@@ -153,11 +153,13 @@ This USGS product is considered to be in the U.S. public domain, and is licensed
 
 This software is preliminary or provisional and is subject to revision. It is being provided to meet the need for timely best science. The software has not received final approval by the U.S. Geological Survey (USGS). No warranty, expressed or implied, is made by the USGS or the U.S. Government as to the functionality of the software and related material nor shall the fact of release constitute any such warranty. The software is provided on the condition that neither the USGS nor the U.S. Government shall be held liable for any damages resulting from the authorized or unauthorized use of the software.
 
+
 Acknowledgements
 ----------------
-* Original concepts from https://doi.org/10.1186/2193-1801-3-589
-* This work was supported by funding from the USGS Community of Data Integration (CDI).  The CDI project (FY2016) National Stream Summarization: Standardizing Stream-Landscape Summaries Project and all those involved contributed guidance and concepts used in this effort.
-* This work was supported by the National Climate Adaptation Science Center
+* Original concepts from Tsang, Yin-Phan, Daniel Wieferich, Kuolin Fung, Dana M. Infante, and Arthur R. Cooper. 2014. An approach for aggregating upstream catchment information to support research and management of fluvial systems across large landscapes. SpringerPlus, vol. 3, no. 589. https://doi.org/10.1186/2193-1801-3-589
+* This work was supported by funding from the USGS Community for Data Integration (CDI).  The CDI project (FY2016) National Stream Summarization: Standardizing Stream-Landscape Summaries Project and all those involved contributed guidance and concepts used in this effort.
+* This work was supported by the USGS National Climate Adaptation Science Center
+
 
 * This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
 
