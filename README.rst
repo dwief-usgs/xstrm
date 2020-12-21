@@ -22,7 +22,16 @@ Terminology
 -----------
 * Segment: The smallest unit represented within a stream network. This could represent a stream segment (i.e. line segment) or local drainage unit (i.e. polygon).
 
+* Children: In upstream implementations children are segments directly downstream of the segment of interest.  In downstream implementations children are segments directly upstream of the segment of interest.
+
+* Parents: In upstream implementations parents are segments directly upstream of the segment of interest.  In downstream implementations parents are segments directly downstream of the segment of interest.
+
 * NHDPlus: The National Hydrography Dataset Plus network is commonly used to represent streams in the United States. There are several versions of this dataset, each having slightly different schemas.
+
+* Downstream implementation: Building a relationship between a segment and all (downstream) segments that recieve flow from the segment of interest.
+
+* Upstream implementation: Building a relationship between a segment and all (upstream) segments that flow to the segment of interest.
+
 
 Currently Included 
 ------------------

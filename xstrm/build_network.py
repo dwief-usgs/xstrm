@@ -1,16 +1,21 @@
-"""Summarize upstream catchment information.
+"""Build and store stream network.
 
-    Description
-    ----------
-    Module that helps support summarization of upstream network
-    information from "local" segments of the network.
-    Methods included focus on building of a network and requires
-    to and from node information for each stream segment.
+Description
+----------
+Module with methods to support building and storage of
+stream networks based on segments of the network and
+associated topology. Output consist of a list of
+network identifiers (referenced as parents) for each segment
+in the network. Methods work with any network having to
+and from nodes and will work in upstream and downstream
+implementations.
 
-    Notes
-    ----------
-    Throughout this module 'seg' represents a segment of a stream
-    network. Segment can represent a line or polygon.
+Notes
+----------
+Throughout this module 'seg' represents the smallest unit
+represented within a stream network. This could represent
+a stream segment (i.e. line segment) or local drainage
+unit (i.e. polygon)
 
 """
 
@@ -19,12 +24,11 @@ import warnings
 import sys
 import numpy as np
 import h5py
-import fastparquet
 from xstrm import network_calc
 
 
 class StreamSegment:
-    """Build and store network information of a stream segments.
+    """Build a stream segment object containing network information.
 
     Description
     ----------
@@ -32,25 +36,29 @@ class StreamSegment:
     Methods to initialize stream segment and update based on known
     information about the network.
 
-    Intended to be used with def build_network_setup() and
-    with def build_network().
+    Intended to be used with def build_network_setup(),
+    def build_network(), def build_calc_network(), and or
+    def build_hdf_network().
 
     Parameters
     ----------
-    xstrm_id : str
-        identifier of local segment of a network
+    xstrm_id : int
+        identifier of local segment of a network. it is recommended
+        to use def df_transform() to develop and format xstrm_id
         int or int represented as string
 
     Other Object Attributes
     ----------
     children : list
-        list of upstream xstrm_ids
+        list of network xstrm_ids directly connected to segment
+        in upstream implementations children are upstream segments
     parents : list
-        list of downstream xstrm_ids
+        list of network xstrm_ids directly connected to segment
+        in upstream implementations parents are downstream segments
     visited_parent_cnt: int
         number of total parents visited
     all_parents: set
-        unique set of xstrm_ids
+        unique set of xstrm_ids in network
 
     """
 
@@ -74,13 +82,13 @@ class StreamSegment:
 
 
 def build_network_setup(df):
-    """Build a queue of Stream Segments for upstream summarization.
+    """Build a queue of Stream Segments to support network build methods.
 
     Description
     ----------
     Accepts dataframe with each row documenting a relation between
-    a segment and upstream segment (using ids)
-    We use to/from nodes to built this relationship
+    a segment and a child segment (using ids)
+    def df_transform() helps build this table of related segments
 
     Parameters
     ----------
@@ -91,7 +99,7 @@ def build_network_setup(df):
     ----------
     traverse_queue: list
         list of StreamSegment objects
-        This list contains objects with no upstream segments
+        this list contains objects that have no parent segments.
 
     """
     segments = {}
@@ -107,7 +115,7 @@ def build_network_setup(df):
         else:
             seg = segments[xstrm_id]
 
-        # create new upper stream unit if it was not created yet
+        # create new parent stream unit if it was not created yet
         if up_xstrm_id != "0" and up_xstrm_id not in segments:
             up_seg = StreamSegment(up_xstrm_id)
             segments[up_xstrm_id] = up_seg
@@ -118,8 +126,7 @@ def build_network_setup(df):
             up_seg.children.append(seg)
             seg.parents.append(up_seg)
 
-    # Build starting point for aggregation
-    # Only include headwaters (no parent upstream)
+    # Only include segments with no parent segments
     traverse_queue = [x for x in segments.values() if not x.parents]
     return traverse_queue
 
@@ -132,7 +139,7 @@ def build_network(traverse_queue, include_seg=True):
     Builds the network and returns it as a list of objects.
     Intended to provide a build_network option with maximum
     flexibility of use and no direct connection to network calc.
-    For large networks, complex networks we recommend using
+    For large or complex networks we recommend using
     build_network_hdf as this method is memory expensive!
 
     Uses traverse_queue from def build_network_setup() to
@@ -147,7 +154,7 @@ def build_network(traverse_queue, include_seg=True):
     ----------
     traverse_queue: list
         list of StreamSegment objects
-        This list contains objects with no upstream segments
+        This list contains objects with no parent segments
     include_seg: bool
         where True means add segment to parent list
 
@@ -155,7 +162,7 @@ def build_network(traverse_queue, include_seg=True):
     ----------
     traverse_queue: list
         complete list of StreamSegment objects for the network
-        each object contains a list of upstream segment ids
+        each object contains a list of parent segment ids
 
     """
     traverse_queue_indx = 0
@@ -177,18 +184,23 @@ def build_calc_network(traverse_queue, include_seg=True, num_proc=4):
 
     Description
     ----------
+    Builds the network and returns an object to help support
+    network calculations directly from memory. Although this method is
+    convenient for direct processing it does not store or export
+    the network. For large or complex networks we recommend using
+    build_network_hdf as this method is memory expensive!
+
     Uses traverse_queue from def build_network_setup() to
-    build out entire network.  Starts at headwater streams and
+    build out entire network. When building upstream networks
+    this process starts at headwater streams and
     traverses the network adding new segments to the queue as
     all of the segments parents become accounted for.
-    This process returns entire network as a list of segments,
-    where each segment is represented by a StreamSegment object.
 
     Parameters
     ----------
     traverse_queue: list
         list of StreamSegment objects
-        This list contains objects with no upstream segments
+        This list contains objects with no parent segments
     include_seg: bool
         where True means add segment to parent list
     num_proc: int
@@ -223,27 +235,29 @@ def build_calc_network(traverse_queue, include_seg=True, num_proc=4):
 
 
 def build_hdf_network(traverse_queue, hdf_file, include_seg=True):
-    """Traverse and build the network starting with headwater segments.
+    """Build and export the stream network.
 
     Description
     ----------
+    Builds the network and exports the network to hdf5 format.
+    This allows network calculations to be handled on a segment by
+    segment basis and will help advert memory issues faced with
+    large and complex networks. This method also exports an object
+    intended to help faciliate future network calculations.
+
     Uses traverse_queue from def build_network_setup() to
-    build out entire network.  Starts at headwater streams and
+    build out entire network. When building upstream networks
+    this process starts at headwater streams and
     traverses the network adding new segments to the queue as
     all of the segments parents become accounted for.
-    This process returns entire network as a list of segments,
-    where each segment is represented by a StreamSegment object.
 
     Parameters
     ----------
     traverse_queue: list
         list of StreamSegment objects
-        This list contains objects with no upstream segments
+        This list contains objects with no parent segments
     hdf_file: str
         file name including .hd5 extenstion
-    networkcalc_file: str
-        file name for networkcalc object (parquet)
-        must include extension .parquet
     include_seg: bool
         where True means add segment to parent list
 
@@ -574,13 +588,3 @@ def indx_to_id(data_df, indx_df, id_col_name, need="id_col_name"):
         sys.exit(m)
 
     return related_df
-
-
-def write_parquet(file_name, obj_name):
-    # Export networkcalc object
-    fastparquet.write(file_name, obj_name)
-
-
-def read_parquet(file_name):
-    pf = fastparquet.ParquetFile(file_name)
-    return pf
