@@ -22,6 +22,8 @@ Terminology
 -----------
 * Segment: The smallest unit represented within a stream network. This could represent a stream segment (i.e. line segment) or local drainage unit (i.e. polygon).
 
+* Network: All stream segments that relate to a given segment, where the relationship can be specified as all segments that flow to the segment of interest (i.e. upstream) or all segments that recieve flow from the segment of interest (i.e. downstream).
+
 * Children: In upstream implementations children are segments directly downstream of the segment of interest.  In downstream implementations children are segments directly upstream of the segment of interest.
 
 * Parents: In upstream implementations parents are segments directly upstream of the segment of interest.  In downstream implementations parents are segments directly downstream of the segment of interest.
@@ -41,7 +43,7 @@ Currently Included
 
 * For a given network return all upstream or downstream segment or drainage identifiers.
 
-* A mock network is included in tests folder for convenience of testing. An image of the network, diagram_of_test_data.JPG, along with network data, test_local_data.csv, are included.
+* A mock network is included in tests folder for convenience of testing and understanding functionality. An image of the network, diagram_of_test_data.JPG, along with network data, test_local_data.csv, are included.
 
 Requirements
 ------------

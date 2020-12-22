@@ -2,20 +2,19 @@
 
 Description
 ----------
-Module with methods to support building and storage of
-stream networks based on segments of the network and
-associated topology. Output consist of a list of
-network identifiers (referenced as parents) for each segment
-in the network. Methods work with any network having to
-and from nodes and will work in upstream and downstream
-implementations.
+Module that supports building and storage of stream
+networks from associated topology (to and from relationships).
+In this module a network refers to a list of stream segments
+that relate to a given segment, where the relationship can be
+specified as all segments that flow to the segment (i.e. upstream)
+or all segments that recieve flow from the segment (i.e. downstream).
+Methods work with any network having to and from nodes.
 
 Notes
 ----------
-Throughout this module 'seg' represents the smallest unit
-represented within a stream network. This could represent
-a stream segment (i.e. line segment) or local drainage
-unit (i.e. polygon)
+Throughout this module a segment, aka 'seg', represents the smallest unit
+represented within a stream network. This could represent a stream
+segment (i.e. line segment) or local drainage unit (i.e. polygon).
 
 """
 
@@ -32,7 +31,7 @@ class StreamSegment:
 
     Description
     ----------
-    Used to help track network information for a stream segment.
+    Object to track network information for a stream segment.
     Methods to initialize stream segment and update based on known
     information about the network.
 
@@ -43,22 +42,22 @@ class StreamSegment:
     Parameters
     ----------
     xstrm_id : int
-        identifier of local segment of a network. it is recommended
-        to use def df_transform() to develop and format xstrm_id
-        int or int represented as string
+        Identifier of local segment of a network. It is recommended
+        to use def df_transform() to develop and format 'xstrm_id'.
+        'xstrm_id' should be formatted as int or int represented as string.
 
     Other Object Attributes
     ----------
     children : list
-        list of network xstrm_ids directly connected to segment
-        in upstream implementations children are upstream segments
+        List of network xstrm_ids directly connected to segment.
+        In upstream implementations children are downstream segments.
     parents : list
-        list of network xstrm_ids directly connected to segment
-        in upstream implementations parents are downstream segments
+        List of network xstrm_ids directly connected to segment.
+        In upstream implementations parents are upstream segments.
     visited_parent_cnt: int
-        number of total parents visited
+        Number of total parents visited.
     all_parents: set
-        unique set of xstrm_ids in network
+        Unique set of xstrm_ids in network.
 
     """
 
@@ -70,7 +69,7 @@ class StreamSegment:
         self.all_parents = {}
 
     def update_all_parents(self):
-        """Update parent list with list of upstream seg ids."""
+        """Update parent list with list of network seg ids."""
         parent_list = sorted(set([p for p in self.all_parents]))
         self.all_parents = parent_list
 
@@ -82,7 +81,7 @@ class StreamSegment:
 
 
 def build_network_setup(df):
-    """Build a queue of Stream Segments to support network build methods.
+    """Build a queue of StreamSegments to support network build methods.
 
     Description
     ----------
@@ -93,13 +92,17 @@ def build_network_setup(df):
     Parameters
     ----------
     df: df
-        pandas dataframe with xstrm_id as index, and column 'up_xstrm_id'
+        Pandas dataframe documenting the relationship between segments and parent
+        segments using xstrm_ids. There are two columns.  'xstrm_id' is set as
+        the index and and parent xstrm_ids are represented in the 'up_xstrm_id'
+        column. Both columns are stored as int and null values in 'up_xstrm_id'
+        are stored as 0.
 
     Returns
     ----------
     traverse_queue: list
-        list of StreamSegment objects
-        this list contains objects that have no parent segments.
+        List of StreamSegment objects.
+        This list contains objects that have no parent segments.
 
     """
     segments = {}
@@ -139,8 +142,8 @@ def build_network(traverse_queue, include_seg=True):
     Builds the network and returns it as a list of objects.
     Intended to provide a build_network option with maximum
     flexibility of use and no direct connection to network calc.
-    For large or complex networks we recommend using
-    build_network_hdf as this method is memory expensive!
+    This method is memory expensive so for large or complex
+    networks we recommend using build_network_hdf.
 
     Uses traverse_queue from def build_network_setup() to
     build out entire network. When building upstream networks
@@ -153,16 +156,17 @@ def build_network(traverse_queue, include_seg=True):
     Parameters
     ----------
     traverse_queue: list
-        list of StreamSegment objects
-        This list contains objects with no parent segments
+        List of StreamSegment objects.
+        This list contains objects with no parent segments.
     include_seg: bool
-        where True means add segment to parent list
+        True means include processing segment in parent list.
+        False means omit processing segment from parent list.
 
     Returns
     ----------
     traverse_queue: list
-        complete list of StreamSegment objects for the network
-        each object contains a list of parent segment ids
+        Complete list of StreamSegment objects for the network.
+        Each object contains a list of parent segment ids.
 
     """
     traverse_queue_indx = 0
@@ -187,8 +191,8 @@ def build_calc_network(traverse_queue, include_seg=True, num_proc=4):
     Builds the network and returns an object to help support
     network calculations directly from memory. Although this method is
     convenient for direct processing it does not store or export
-    the network. For large or complex networks we recommend using
-    build_network_hdf as this method is memory expensive!
+    the network. This method is memory expensive so for large or
+    complex networks we recommend using build_network_hdf.
 
     Uses traverse_queue from def build_network_setup() to
     build out entire network. When building upstream networks
@@ -199,17 +203,21 @@ def build_calc_network(traverse_queue, include_seg=True, num_proc=4):
     Parameters
     ----------
     traverse_queue: list
-        list of StreamSegment objects
-        This list contains objects with no parent segments
+        List of StreamSegment objects.
+        This list contains objects with no parent segments.
     include_seg: bool
-        where True means add segment to parent list
+        True means include processing segment in parent list.
+        False means omit processing segment from parent list.
     num_proc: int
-        Number of worker processes to use in multiprocessing
+        Number of worker processes to use in multiprocessing.
 
     Returns
     ----------
-    summary: NetworkCalc object
-        Initialized NetworkCalc object to support processing
+    summary: obj
+        NetworkCalc object that contains lists of 'xstrm_ids'
+        to help support network processing. Includes 3 lists
+        (segments with no parents, segments with one parent
+        and segments with multiple parents).
 
     """
     traverse_queue_indx = 0
@@ -243,7 +251,7 @@ def build_hdf_network(traverse_queue, hdf_file, include_seg=True):
     This allows network calculations to be handled on a segment by
     segment basis and will help advert memory issues faced with
     large and complex networks. This method also exports an object
-    intended to help faciliate future network calculations.
+    intended to help facilitate future network calculations.
 
     Uses traverse_queue from def build_network_setup() to
     build out entire network. When building upstream networks
@@ -257,15 +265,18 @@ def build_hdf_network(traverse_queue, hdf_file, include_seg=True):
         list of StreamSegment objects
         This list contains objects with no parent segments
     hdf_file: str
-        file name including .hd5 extenstion
+        file name including .hd5 extension
     include_seg: bool
-        where True means add segment to parent list
+        True means include processing segment in parent list.
+        False means omit processing segment from parent list.
 
     Returns
     ----------
     summary: obj
-        NetworkCalc object containing info for network calc
-        including 3 lists (no parents, one parent and multiple parents)
+        NetworkCalc object that contains lists of 'xstrm_ids'
+        to help support network processing. Includes 3 lists
+        (segments with no parents, segments with one parent
+        and segments with multiple parents).
     hdf_file: hd5
         local hdf5 file for storage and access of network
 
@@ -323,36 +334,37 @@ def df_transform(df, id_col_name, to_node_col, from_node_col):
 
     Description
     ----------
-    Format dataframe containing segments, to nodes and from nodes.
-    Reformats data to be excepted by get_data.build_network_setup().
+    Format a pandas dataframe containing segments, to nodes and from nodes
+    for use by build_network.build_network_setup().
 
     Parameters
     ----------
     df: df
-        pandas dataframe containing segment id, to node, from node
+        Pandas dataframe containing segment id, to node, from node.
     id_col_name: str
-        string representation of name of the identifier column
-        values in this column can represent str or num
+        String representation of the column name for the identifier column.
+        Values in this column can represent str or num.
     to_node_col: str
-        string representation of name of the column containing
-        to node information for the network
-        values in this column can represent str or num
+        String representation of column name for the column containing
+        to node information for the network.
+        Values in this column can represent str or num.
     from_node_col: str
-        string representation of name of the column containing
-        from node information for the network
-        values in this column can represent str or num
+        String representation of column name for the column containing
+        from node information for the network.
+        Values in this column can represent str or num.
 
     Returns
     ----------
     network_df: df
-        pandas dataframe intended for use in
-        network_summary.py of the summarize_upstream
-        structured as xstrm_id as index with up_xstrm_id column
-        both columns stored as str and up_xstrm_id null values
-        are stored as 0
+        Pandas dataframe intended for use in build_network.build_network_setup().
+        The dataframe documents the relationship between segments and parent
+        segments using xstrm_ids. There are two columns.  'xstrm_id' is set as
+        the index and and parent xstrm_ids are represented in the 'up_xstrm_id'
+        column. Both columns are stored as int and null values in 'up_xstrm_id'
+        are stored as 0.
     indx_df: df
-        pandas dataframe that relates temporary index ids
-        with user provided id (id_col)
+        Pandas dataframe that relates the temporary index ids ('xstrm_id') with
+        user provided id ('id_col_name').
 
     """
     if id_col_name == "xstrm_id":
@@ -394,41 +406,42 @@ def df_transform(df, id_col_name, to_node_col, from_node_col):
 
 
 def import_tofrom_csv(file_name, id_col_name, to_node_col, from_node_col):
-    """Import and format text file with stream network info.
+    """Import and format CSV file with stream network info.
 
     Description
     ----------
-    Imports CSV file containing segments along with to and from nodes.
-    Reformats data to be excepted by get_data.build_network_setup().
+    Imports CSV file containing segment identifiers, to nodes, and from
+    nodes. Reformats data to be excepted by build_network.build_network_setup().
 
     Parameters
     ----------
     file_name: str
-        string representation of file name including directory and extension
+        String representation of file name including directory and extension
         e.g. 'data/my_network_data.csv'
     id_col_name: str
-        string representation of name of the identifier column
-        values in this column can represent str or num
+        String representation of the column name for the identifier column.
+        Values in this column can represent str or num.
     to_node_col: str
-        string representation of name of the column containing
-        to node information for the network
-        values in this column can represent str or num
+        String representation of column name for the column containing
+        to node information for the network.
+        Values in this column can represent str or num.
     from_node_col: str
-        string representation of name of the column containing
-        from node information for the network
-        values in this column can represent str or num
+        String representation of column name for the column containing
+        from node information for the network.
+        Values in this column can represent str or num.
 
     Returns
     ----------
     network_df: df
-        pandas dataframe intended for use in
-        network_summary.py of the summarize_upstream
-        structured as xstrm_id as index with up_xstrm_id column
-        both columns stored as str and up_xstrm_id null values
-        are stored as 0
+        Pandas dataframe intended for use in build_network.build_network_setup().
+        The dataframe documents the relationship between segments and parent
+        segments using xstrm_ids. There are two columns.  'xstrm_id' is set as
+        the index and and parent xstrm_ids are represented in the 'up_xstrm_id'
+        column. Both columns are stored as int and null values in 'up_xstrm_id'
+        are stored as 0.
     indx_df: df
-        pandas dataframe that relates temporary index ids
-        with user provided id (id_col)
+        Pandas dataframe that relates the temporary index ids ('xstrm_id') with
+        user provided id ('id_col_name').
 
     """
     use_cols = [
@@ -454,21 +467,22 @@ def transfer_seg_data(seg, traverse_queue):
     Parameters
     ----------
     seg: obj
-        StreamSegment object
+        StreamSegment object.
     traverse_queue: list
-        list of object to process
+        Start list of objects to process.
 
     Returns
     ----------
     traverse_queue: list
-        Updated list of objects to process
-        this may or may not be the same as the input
+        Updated list of objects to process.
+        This may or may not be the same as the input.
 
     Notes
     ----------
-    In addition to returning the queue, segment objects are updated
-    In building upstream network, children would be downstream segments
-    In building downstream network, children would be upstream segments
+    In addition to returning the queue, segment objects are updated.
+    In building upstream network, children would be downstream segments.
+    In building downstream network, children would be upstream segments.
+
     """
     # For each child of segment
     for child in seg.children:
@@ -486,21 +500,21 @@ def transfer_seg_data(seg, traverse_queue):
 
 
 def get_parents_hdf(hd5_open, xstrm_id):
-    """Get np array of ids in network for xstrm_id.
+    """Get np array of ids in network for a xstrm_id.
 
     Parameters
     ----------
     hd5_open: object
-        object representing opened hd5 file.
-        "with h5py.File(file, 'r') as hd5_open"
+        Object representing opened hd5 file.
+        Example "with h5py.File(file, 'r') as hd5_open".
     xstrm_id: str or int
-        xstrm_id of the stream segment of interest
+        Index of the stream segment of interest.
 
     Returns
     ----------
     parents: array
-        numpy array of xstrm identifiers where each
-        identifier is an integer
+        Numpy array of 'xstrm_id' where each
+        identifier is an integer.
 
     """
     v = hd5_open.get(str(xstrm_id))
@@ -521,16 +535,15 @@ def get_parent_list(network, xstrm_id):
     Parameters
     ----------
     network: list
-        complete list of StreamSegment objects for the network
+        Complete list of StreamSegment objects for the network
         as returned in def build_network()
     xstrm_id: str
-        id of the stream segment of interest
+        Index of the stream segment of interest.
 
     Returns
     ----------
     parents: list
-        list of stream segment identifiers in str format
-
+        List of 'xstrm_id' where each identifier is an integer.
     """
     # if seg is not found return None
     parents = next((
@@ -547,26 +560,27 @@ def get_parent_list(network, xstrm_id):
 
 
 def indx_to_id(data_df, indx_df, id_col_name, need="id_col_name"):
-    """Replace processing index with user supplied identifier.
+    """Relates xstrm_id to user submitted identifier.
 
     Parameters
     ----------
     data_df: df
-        pandas dataframe with_data
+        Pandas dataframe with data needing related identifier. Must contain
+        either 'xstrm_id' or 'id_col_name'.
     indx_df: df
-        pandas dataframe that relates temporary index ids
-        with user provided id (id_col_name)
+        Pandas dataframe that relates the temporary index ids ('xstrm_id')
+        with user provided id ('id_col_name').
     id_col_name: str
-        string representation of name of the identifier column
-        values in this column can represent str or num
+        String representation of the column name for the identifier column.
+        Values in this column can represent str or num.
     need: str
-        string representing which field
-        options include "id_col_name" or "xstrm_id"
+        String representing which column is needed from relation.
+        Options include "id_col_name" or "xstrm_id".
 
     Returns
     ----------
     related_df: df
-        pandas dataframe with need column included
+        Pandas dataframe with 'need' column included
 
     """
     if need == "id_col_name":

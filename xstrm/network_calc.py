@@ -1,20 +1,21 @@
 """Summarize upstream catchment information.
 
-    Author
-    ----------
-    Daniel Wieferich: dwieferich@usgs.gov
-
     Description
     ----------
-    Module that helps support network summarization
+    Module that helps support network summarization of
     information from "local" segments of the network.
-    Methods require information summarized to local catchments.
+    Methods require information pre-summarized to local segments.
 
-    Notes
-    ----------
-    Throughout this module 'seg' represents a segment of a stream
-    network. Segment can represent a line or polygon and can have a
-    length and or area associated with it.
+    Methods currently support calculations for sum, min, max and
+    weighted average.
+
+    To help process information in the most efficient manner the
+    NetworkCalc class should be used.  This seperates segments into
+    three bins 1)segments with no parents, 2)segments with one parent
+    and 3)segments with multiple parents.  Segments in bins 1 and 2
+    are processed all together to minimize unneeded queries. Each
+    segment in 3 is processed individually.
+
 """
 
 # import needed packages
@@ -30,42 +31,44 @@ def get_local_vars_csv(file_name,
                        id_col_name,
                        weight_col_name=None,
                        drop_cols=[]):
-    """Import and format text file with local segment data.
+    """Import and format CSV file with local segment data.
 
     Description
     ----------
-    Imports text file into pandas that contains summaries of information
-    at the local stream segment level.  This file should also contain the
-    stream segment identifier and stream_segment weight (e.g. area for
-    area weighted average or length for length weighted average.) If weight
-    is not required use default.
+    Imports CSV file into Pandas that contains summaries of information
+    at the local stream segment level. This file should also contain the
+    stream segment identifier and stream_segment weight (if applicable).
+    Examples of weights include area for area weighted average or length
+    for length weighted average.) If weight is not required use default.
 
-    See file 'tests/test_local_data.csv' as example
+    See file 'tests/test_local_data.csv' as example.
 
     Parameters
     ----------
     file_name: str
-        string representation of file name including directory and extension
+        String representation of file name including directory and extension
         e.g. 'data/my_local_data.csv'
     indx_df: df
-        pandas dataframe that relates temporary index ids
-        with user provided id (id_col)
+        Pandas dataframe that relates the temporary index ids ('xstrm_id') with
+        user provided id ('id_col_name').
     id_col_name: str
-        name of the identifier column
-        values in this column can represent str or int
+        String representation of the column name for the identifier column.
+        Values in this column can represent str or num.
     weight_col_name: str
-        name of the column containing weights for upstream average
-        this field is optional, default all segments have equal
-        weights. Values should be int or float
+        String representation of the column name for the column containing
+        weights for network weighted averages.  This field is optional,
+        and as default all segments have equal weights.
+        Values should be int or float.
     drop_cols: list
-        list of comma separated strings representing column names that
-        should not be processes during network_calc operations
+        List of comma separated strings representing column names that
+        should not be processes during network_calc operations.
 
     Returns
     ----------
-    df2: df
-        pandas dataframe intended for use in
-        network_summary.py of the summarize_upstream module
+    df: df
+        Pandas dataframe formatted for and intended for use in
+        network_calc methods.  Contains xstrm_id, seg_weight and
+        variables to be summarized.
 
     """
 
@@ -83,7 +86,7 @@ def get_local_vars_df(df,
                       id_col_name,
                       weight_col_name=None,
                       drop_cols=[]):
-    """Format pandas df with local segment data for use of network_calc methods.
+    """Format Pandas df with local segment data for use of network_calc methods.
 
     Description
     ----------
@@ -96,27 +99,29 @@ def get_local_vars_df(df,
     Parameters
     ----------
     df: df
-        dataframe containing data for each local stream segment
+        Dataframe containing data for each local stream segment. Multiple
+        columns of data can be included.
     indx_df: df
-        pandas dataframe that relates temporary index ids
-        with user provided id (id_col_name)
+        Pandas dataframe that relates the temporary index ids ('xstrm_id') with
+        user provided id ('id_col_name').
     id_col_name: str
-        name of the identifier column
-        values in this column can represent str or int
+        String representation of the column name for the identifier column.
+        Values in this column can represent str or num.
     weight_col_name: str
-        name of the column containing weights for upstream average
-        this field is optional, default all segments have equal
-        weights. Values should be int or float
+        String representation of the column name for the column containing
+        weights for network weighted averages.  This field is optional,
+        and as default all segments have equal weights.
+        Values should be int or float.
     drop_cols: list
-        list of comma separated strings representing column names that
-        should not be processes during network_calc operations, default
-        is an empty list
+        List of comma separated strings representing column names that
+        should not be processes during network_calc operations.
 
     Returns
     ----------
     df2: df
-        pandas dataframe intended for use in
-        network_summary.py of the summarize_upstream module
+        Pandas dataframe formatted for and intended for use in
+        network_calc methods.  Contains xstrm_id, seg_weight and
+        variables to be summarized.
 
     """
     field_names = {}
@@ -163,12 +168,15 @@ class NetworkCalc:
         Description
         ----------
         Manages information associated with processing
-        network calculations.
+        network calculations. Lists of identifiers are used
+        to process information in an efficient manner using
+        multiprocessing and also minimizing unneeded queries
+        for segments with one or less parents.
 
         Parameters
         ----------
         num_proc: int
-            Number of worker processes to use in multiprocessing
+            Number of worker processes to use in multiprocessing.
 
         """
         self.num_proc = num_proc
@@ -181,7 +189,26 @@ class NetworkCalc:
         self.final_df = None
 
     def add_seg(self, xstrm_id, all_parents, include_seg=True):
-        """Add xstrm_id to processing lists as traverse network."""
+        """Add xstrm_id to appropriate processing list.
+
+        Description
+        ----------
+        Add xstrm_id to appropriate processing list, depending on
+        if the segment has no parents, one parent or multiple parents.
+        This method is used in the build_network.
+
+        Parameters
+        ----------
+        xstrm_id: str or int
+            Index of the stream segment of interest.
+        all_parents: list
+            List of xstrm_ids that represent parents of the xstrm_id
+            of interest.
+        include_seg: bool
+            True means include processing segment in parent list.
+            False means omit processing segment from parent list.
+
+        """
         if len(all_parents) == 0:
             self.no_parent_ids.append(xstrm_id)
         elif include_seg and len(all_parents) == 1:
@@ -191,7 +218,27 @@ class NetworkCalc:
             self.multi_parent_ids.append(val)
 
     def add_hdf_seg(self, xstrm_id, all_parents, include_seg=True):
-        """Add xstrm_id to processing lists as traverse network."""
+        """Add xstrm_id to processing lists as traverse network.
+
+        Description
+        ----------
+        Add xstrm_id to appropriate processing list when building
+        network to hdf file, depending on if the segment has no
+        parents, one parent or multiple parents.
+        This method is used in the build_network.
+
+        Parameters
+        ----------
+        xstrm_id: str or int
+            Index of the stream segment of interest.
+        all_parents: list
+            List of xstrm_ids that represent parents of the xstrm_id
+            of interest.
+        include_seg: bool
+            True means include processing segment in parent list.
+            False means omit processing segment from parent list.
+
+        """
         if len(all_parents) == 0:
             self.no_parent_ids.append(xstrm_id)
         elif include_seg and len(all_parents) == 1:
@@ -202,7 +249,29 @@ class NetworkCalc:
     def add_processing_details(
         self, local_df, calc_type="sum", include_missing=True
     ):
-        """Add details to processing object."""
+        """Capture processing details to processing object.
+
+        Description
+        ----------
+        Capture processing details to help direct code in
+        the network calculation steps. User defines local data,
+        calculation type and if missing information should be
+        calculated or not.
+
+        Parameters
+        ----------
+        local_df: df
+            Pandas dataframe containing xstrm_id, seg_weight and
+            variables to be summarized. Should be formatted by (or
+            similar to) def get_local_vars_df
+        calc_type: str
+            Options include: 'sum','min','max','weighted_avg'
+            See calc_* functions for more detail.
+        include_missing: bool
+            Where True summarizes percent of segment weight missing data
+            at the local scale.  Where False does not calculate missing.
+
+        """
         if isinstance(local_df, pd.DataFrame):
             self.local_df = local_df
         else:
@@ -218,8 +287,8 @@ class NetworkCalc:
         Parameters
         ----------
         calc_type: str
-            options: 'sum','min','max','weighted_avg'
-            see calc_* functions for more detail
+            Options include: 'sum','min','max','weighted_avg'
+            See calc_* functions for more detail.
 
         """
         options = ['sum', 'max', 'min', 'weighted_avg']
@@ -236,14 +305,14 @@ class NetworkCalc:
         Parameters
         ----------
         drop_vars: list
-            list of column names not to include
+            List of column names not to include in calculations.
 
         Returns
         ----------
         target_vars: list
-            list of column names to perform summary calculations on
+            List of column names to perform summary calculations on.
         out_vars: list
-            list of column names (str) expected in network_calc output
+            List of column names (str) expected in network_calc output.
 
         """
         all_vars = self.local_df.columns.to_list()
@@ -268,7 +337,14 @@ class NetworkCalc:
         self.out_vars = out_vars
 
     def calc_one_parent(self):
-        """Build dataframe from one parent id list."""
+        """Build dataframe from one parent id list.
+
+        Description
+        ----------
+        Build dataframe for all segments that have one
+        parent, where parent == segment.
+
+        """
         if len(self.one_parent_ids) > 0:
             self.one_parent_df = one_parent_to_df(
                 self.local_df,
@@ -278,7 +354,16 @@ class NetworkCalc:
             )
 
     def calc_no_parent(self):
-        """Build dataframe from no parent id list."""
+        """Build dataframe from no parent id list.
+
+        Description
+        ----------
+        Build dataframe for all segments that have no
+        parent.  This dataframe will contain all null
+        data. This will never contain segments when
+        include_seg == True.
+
+        """
         if len(self.no_parent_ids) > 0:
             self.no_parent_df = no_parent_to_df(
                 self.no_parent_ids, self.out_vars
@@ -324,7 +409,15 @@ class NetworkCalc:
         self.multi_parent_df = all_summary_df.rename(rename_fields, axis="columns")
 
     def calc_mult_parent_mp(self):
-        """Build dataframe from mult parent id list, no mp."""
+        """Build dataframe from mult parent id list, mp.
+
+        Description
+        ----------
+        Build dataframe for all segments that have multiple
+        parents. This method uses multiprocessing to help
+        process large networks more efficiently.
+
+        """
         p = Pool(self.num_proc)
         list_summaries = partial(self.seg_calc)
         result = p.map(list_summaries, self.multi_parent_ids)
@@ -341,7 +434,15 @@ class NetworkCalc:
         self.multi_parent_df = all_summary_df
 
     def seg_calc(self, seg):
-        """Segment network calculation for use with multiprocessing."""
+        """Segment network calculation for use with multiprocessing.
+
+        Description
+        ----------
+        Performs calculation for a specified segment using information
+        predefined in the class. Runs summary method that matches user
+        requests.
+
+        """
         xstrm_id = seg['xstrm_id']
         parents = seg['parents']
         target_df = self.local_df[
@@ -407,20 +508,22 @@ def one_parent_to_df(
     Parameters
     ----------
     local_df: df
-        pandas dataframe intended for use in
-        network_summary.py of the summarize_upstream module,
-        contains values representing local segments in network
+        Pandas dataframe containing xstrm_id, seg_weight and
+        variables to be summarized. Should be formatted by (or
+        similar to) def get_local_vars_df
     one_parent_ids: list
-        list of strings representing identifiers of segments with one parent
+        List of xstrm_id of segments that have one network parent
     target_vars: list
-        list of column names to perform summary calculations on
+        List of column names (str) to perform summary calculations on.
     include_missing: bool
-        where True summarizes percent of missing data based on seg_weight
+        Where True summarizes percent of segment weight missing data
+        at the local scale.  Where False does not calculate missing.
 
     Returns
     ----------
     one_parent_df: df
-        pandas dataframe with xstrm_id index and n_ values equal to local
+        Pandas dataframe with xstrm_id index and n_ values equal to
+        local values for that xstrm_id.
 
     """
     one_parent_df = local_df[local_df.index.isin(one_parent_ids)]
@@ -448,19 +551,20 @@ def no_parent_to_df(no_data_ids, out_vars):
     Description
     ----------
     Use a list of identifiers to build out dataframe of no data where
-    segment ids are used as index.
+    xstrm_ids are set to index.
 
     Parameters
     ----------
     no_data_ids: list
-        list of strings representing identifiers of segments with no data
+        List of strings representing identifiers of segments
+        that have no data.
     out_vars: list
-        list of strings used as column names for the new dataframe
+        List of strings used as column names for the new dataframe.
 
     Returns
     ----------
     df: df
-        pandas dataframe with xstrm_id index and all values = nan
+        Pandas dataframe with xstrm_id index and all values = nan
 
     """
     no_data_df = pd.DataFrame(index=no_data_ids, columns=out_vars)
@@ -469,25 +573,26 @@ def no_parent_to_df(no_data_ids, out_vars):
 
 
 def calc_sum(target_df, target_vars, include_missing=True):
-    """Sum values for each column in target vars list.
+    """Sum values for each column of interest in target_df.
 
     Parameters
     ----------
     target_df: df
-        pandas dataframe of each stream segment's local values
+        Pandas dataframe of each stream segment's local values
         for each segment in the network. Number of variables included
-        is dependent on user.
+        is dependent on user and number of rows in the dataframe
+        is dependent on number of parents in the segment's network.
     target_vars: list
-        list of column names to perform summary calculations on
+        List of column names (str) to perform summary calculations on.
     include_missing: bool
-        True include percent of segs (using weight) without data
-        at the local scale
+        Where True summarizes percent of segment weight missing data
+        at the local scale.  Where False does not calculate missing.
 
     Returns
     ----------
     summary: dict
-        dictionary of calculated summary for each variable
-        does not summarize ids or seg_weight
+        Dictionary of calculated summary for each variable
+        Final dictionary does not include summaries of ids or seg_weight.
 
     """
     summary = target_df[target_vars].sum().to_dict()
@@ -499,25 +604,26 @@ def calc_sum(target_df, target_vars, include_missing=True):
 
 
 def calc_max(target_df, target_vars, include_missing=True):
-    """Max value for each column in target vars list.
+    """Max value for each column of interest in target_df.
 
     Parameters
     ----------
     target_df: df
-        pandas dataframe of each stream segment's local values
+        Pandas dataframe of each stream segment's local values
         for each segment in the network. Number of variables included
-        is dependent on user.
+        is dependent on user and number of rows in the dataframe
+        is dependent on number of parents in the segment's network.
     target_vars: list
-        list of column names to perform summary calculations on
+        List of column names (str) to perform summary calculations on.
     include_missing: bool
-        True include percent of segs (using weight) without data
-        at the local scale
+        Where True summarizes percent of segment weight missing data
+        at the local scale.  Where False does not calculate missing.
 
     Returns
     ----------
     summary: dict
-        dictionary of calculated summary for each variable
-        does not summarize ids or seg_weight
+        Dictionary of calculated summary for each variable
+        Final dictionary does not include summaries of ids or seg_weight.
 
     """
     summary = target_df[target_vars].max().to_dict()
@@ -528,25 +634,26 @@ def calc_max(target_df, target_vars, include_missing=True):
 
 
 def calc_min(target_df, target_vars, include_missing=True):
-    """Min value for each column in target vars list.
+    """Min value for each column of interest in target_df.
 
     Parameters
     ----------
     target_df: df
-        pandas dataframe of each stream segment's local values
+        Pandas dataframe of each stream segment's local values
         for each segment in the network. Number of variables included
-        is dependent on user.
+        is dependent on user and number of rows in the dataframe
+        is dependent on number of parents in the segment's network.
     target_vars: list
-        list of column names to perform summary calculations on
+        List of column names (str) to perform summary calculations on.
     include_missing: bool
-        True include percent of segs (using weight) without data
-        at the local scale
+        Where True summarizes percent of segment weight missing data
+        at the local scale.  Where False does not calculate missing.
 
     Returns
     ----------
     summary: dict
-        dictionary of calculated summary for each variable
-        does not summarize ids or seg_weight
+        Dictionary of calculated summary for each variable
+        Final dictionary does not include summaries of ids or seg_weight.
 
     """
     summary = target_df[target_vars].min().to_dict()
@@ -557,25 +664,26 @@ def calc_min(target_df, target_vars, include_missing=True):
 
 
 def calc_weighted_avg(target_df, target_vars, include_missing=True):
-    """Weighted average value for each column in target vars list.
+    """Weighted average value for each column of interest in target_df.
 
     Parameters
     ----------
     target_df: df
-        pandas dataframe of each stream segment's local values
+        Pandas dataframe of each stream segment's local values
         for each segment in the network. Number of variables included
-        is dependent on user.
+        is dependent on user and number of rows in the dataframe
+        is dependent on number of parents in the segment's network.
     target_vars: list
-        list of column names to perform summary calculations on
+        List of column names (str) to perform summary calculations on.
     include_missing: bool
-        True include percent of segs (using weight) without data
-        at the local scale
+        Where True summarizes percent of segment weight missing data
+        at the local scale.  Where False does not calculate missing.
 
     Returns
     ----------
     summary: dict
-        dictionary of calculated summary for each variable
-        does not summarize ids or seg_weight
+        Dictionary of calculated summary for each variable
+        Final dictionary does not include summaries of ids or seg_weight.
 
     """
     # total_weight = target_df['seg_weight'].sum()
@@ -607,17 +715,18 @@ def get_missing_data(target_df, target_vars):
     Parameters
     ----------
     target_df: df
-        pandas dataframe of each stream segment's local values
+        Pandas dataframe of each stream segment's local values
         for each segment in the network. Number of variables included
-        is dependent on user.
+        is dependent on user and number of rows in the dataframe
+        is dependent on number of parents in the segment's network.
     target_vars: list
-        list of column names to perform summary calculations on
+        List of column names (str) to perform summary calculations on.
 
     Returns
     ----------
     missing: dict
-        dictionary of calculated missing values for each variable
-        does not summarize ids or seg_weight
+        Dictionary of calculated missing values for each variable of
+        interest.
 
     """
     target_df = target_df.assign(

@@ -28,58 +28,61 @@ def network_calc_to_csv(
     This function builds a network from to from nodes
     and calculates network summaries for each segment,
     where a segment can be a stream segment or catchment
-    associated with the nodes. Exports data to csv.
+    associated with the nodes. Exports data to csv. This
+    method is used in the network calculator and is intended
+    to simplify use of xstrm on any stream network containing
+    topology (to and from nodes).
 
     Parameters
     ----------
     to_from_csv: str
-        string representation of file name including directory
-        and extension. this file should contain three fields
-        including 1)segment identifier, 2)to Node, 3)from Node
+        String representation of file name including directory and extension
         e.g. 'data/my_network_data.csv'
     local_data_csv: list
-        list of column names to perform summary calculations on
+        String representation of file name including directory and extension
+        e.g. 'data/my_local_data.csv'
     id_col_name: str
-        string representation of name of the identifier column
-        values in this column can represent str or num
+        String representation of the column name for the identifier column.
+        Values in this column can represent str or num.
     to_node_col: str
-        string representation of name of the column containing
-        to node information for the network
-        values in this column can represent str or num
+        String representation of column name for the column containing
+        to node information for the network.
+        Values in this column can represent str or num.
     from_node_col: str
-        string representation of name of the column containing
-        from node information for the network
-        values in this column can represent str or num
+        String representation of column name for the column containing
+        from node information for the network.
+        Values in this column can represent str or num.
     weight_col_name: str
-        name of the column containing weights for upstream average
-        this field is optional, default all segments have equal
-        weights. Values should be int or float
+        String representation of the column name for the column containing
+        weights for network weighted averages.  This field is optional,
+        and as default all segments have equal weights.
+        Values should be int or float.
     calc_type: str
-        options: 'sum','min','max','weighted_avg'
-        see network_calc.calc_* functions for more detail
+        Options include: 'sum','min','max','weighted_avg'
+        See calc_* functions for more detail.
     include_seg: bool
-        where True means add segment to parent list
+        True means include processing segment in parent list.
+        False means omit processing segment from parent list.
     include_missing: bool
-        True include percent of segs (using weight) without data
-        at the local scale
+        Where True summarizes percent of segment weight missing data
+        at the local scale.  Where False does not calculate missing.
     num_proc: int
-        Number of worker processes to use in multiprocessing
+        Number of worker processes to use in multiprocessing.
     precision: int
-        number of decimal places to round float data
+        Number of decimal places to round results.
     drop_cols: list
-        list of comma separated strings representing column names that
-        should not be processes during network_calc operations but are
-        in the local_data_csv
+        List of comma separated strings representing column names that
+        should not be processes during network_calc operations.
 
     Returns
     ----------
-    file: csv
-        dictionary of calculated missing values for each variable
-        does not summarize ids or seg_weight
+    file: CSV
+       Comma seperated file with all specified network calculations.
+       Also includes user's segment id.
 
     Note
     ----------
-    for NHD networks the to node is the downstream node
+    For NHD networks the to node is the downstream node.
 
     """
     if os.path.isfile(to_from_csv) and os.path.isfile(local_data_csv):
