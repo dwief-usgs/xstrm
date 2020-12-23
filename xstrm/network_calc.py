@@ -150,12 +150,17 @@ def get_local_vars_df(df,
         df, indx_df, id_col_name, need="xstrm_id"
     )
 
-    df2 = df.rename(field_names, axis="columns")
-    df2.set_index("xstrm_id", inplace=True)
+    df = df.rename(field_names, axis="columns")
+    df.set_index("xstrm_id", inplace=True)
 
     # Drop columns specified by user
-    df2 = df2.drop(drop_cols, axis="columns")
-    df2 = df2.astype(float)
+    df = df.drop(drop_cols, axis="columns")
+    df2 = df.copy()
+    try:
+        df2 = df2.astype(float)
+    except Exception as e:
+        e = "Only works with numeric local data."
+        sys.exit(e)
 
     return df2
 
@@ -247,7 +252,7 @@ class NetworkCalc:
             self.multi_parent_ids.append(xstrm_id)
 
     def add_processing_details(
-        self, local_df, calc_type="sum", include_missing=True
+        self, local_df, calc_type="sum", include_missing=True, hdf_file=None
     ):
         """Capture processing details to processing object.
 
@@ -270,6 +275,8 @@ class NetworkCalc:
         include_missing: bool
             Where True summarizes percent of segment weight missing data
             at the local scale.  Where False does not calculate missing.
+        hd5_file: str
+            String representing hd5 file.
 
         """
         if isinstance(local_df, pd.DataFrame):
@@ -277,6 +284,9 @@ class NetworkCalc:
         else:
             m = "Verify local_df is a dataframe"
             sys.exit(m)
+        if hdf_file is not None:
+            self.hdf_file = hdf_file
+
         self.include_missing = include_missing
         self.set_calc_type(calc_type)
         self.get_var_names()
@@ -443,8 +453,16 @@ class NetworkCalc:
         requests.
 
         """
-        xstrm_id = seg['xstrm_id']
-        parents = seg['parents']
+        if self.hdf_file is None:
+            xstrm_id = seg['xstrm_id']
+            parents = seg['parents']
+
+        else:
+            xstrm_id = seg
+            parents = build_network.get_parents_hdf(
+                self.hdf_file, xstrm_id
+            )
+
         target_df = self.local_df[
             self.local_df.index.isin(parents)
         ]
@@ -467,6 +485,41 @@ class NetworkCalc:
             )
         seg_summary.update({'xstrm_id': xstrm_id})
         return (seg_summary)
+
+    # def seg_calc(self, seg):
+    #     """Segment network calculation for use with multiprocessing.
+
+    #     Description
+    #     ----------
+    #     Performs calculation for a specified segment using information
+    #     predefined in the class. Runs summary method that matches user
+    #     requests.
+
+    #     """
+    #     xstrm_id = seg['xstrm_id']
+    #     parents = seg['parents']
+    #     target_df = self.local_df[
+    #         self.local_df.index.isin(parents)
+    #     ]
+
+    #     if self.calc_type == 'sum':
+    #         seg_summary = calc_sum(
+    #             target_df, self.target_vars, self.include_missing
+    #         )
+    #     elif self.calc_type == 'max':
+    #         seg_summary = calc_max(
+    #             target_df, self.target_vars, self.include_missing
+    #         )
+    #     elif self.calc_type == 'min':
+    #         seg_summary = calc_min(
+    #             target_df, self.target_vars, self.include_missing
+    #         )
+    #     elif self.calc_type == 'weighted_avg':
+    #         seg_summary = calc_weighted_avg(
+    #             target_df, self.target_vars, self.include_missing
+    #         )
+    #     seg_summary.update({'xstrm_id': xstrm_id})
+    #     return (seg_summary)
 
     def combine_dfs(self, id_col_name="xstrm_id"):
         """Combine no parent, one parent, mult parent dataframes."""

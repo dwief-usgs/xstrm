@@ -499,14 +499,13 @@ def transfer_seg_data(seg, traverse_queue):
     return traverse_queue
 
 
-def get_parents_hdf(hd5_open, xstrm_id):
+def get_parents_hdf(hdf_file, xstrm_id):
     """Get np array of ids in network for a xstrm_id.
 
     Parameters
     ----------
-    hd5_open: object
-        Object representing opened hd5 file.
-        Example "with h5py.File(file, 'r') as hd5_open".
+    hd5_file: str
+        String representing hd5 file.
     xstrm_id: str or int
         Index of the stream segment of interest.
 
@@ -517,14 +516,15 @@ def get_parents_hdf(hd5_open, xstrm_id):
         identifier is an integer.
 
     """
-    v = hd5_open.get(str(xstrm_id))
-    try:
-        parents = np.sort(
-            np.array(v.get('all_parents'), dtype=np.int)
-        )
-    except Exception as e:
-        e = f"{xstrm_id} is not represented in hdf file."
-        sys.exit(e)
+    with h5py.File(hdf_file, 'r') as hd5_open:
+        v = hd5_open.get(str(xstrm_id))
+        try:
+            parents = np.sort(
+                np.array(v.get('all_parents'), dtype=np.int)
+            )
+        except Exception as e:
+            e = f"{xstrm_id} is not represented in hdf file."
+            sys.exit(e)
 
     return parents
 
