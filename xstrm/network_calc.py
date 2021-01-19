@@ -584,7 +584,7 @@ def one_parent_to_df(
     one_parent_df = one_parent_df[target_vars]
     one_parent_df = one_parent_df.add_prefix('n_')
     # For each variable in target_vars add missing_var
-    if include_missing:
+    if len(one_parent_df) > 0 and include_missing:
         for var in target_vars:
             n_var = f"n_{var}"
             m_var = f"mn_{var}"
