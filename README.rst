@@ -55,7 +55,8 @@ Getting Started
 ---------------
 Install the package
 
-Soon users will be able to pip install from main branch using the below command.  Users can install working branches by adding @branch_name
+pip install from main branch using the below command.  Users can also install working branches by adding @branch_name
+
 * pip install git+https://github.com/dwief-usgs/xstrm.git
 
 
