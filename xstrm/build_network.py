@@ -296,8 +296,14 @@ def build_hdf_network(traverse_queue, hdf_file, include_seg=True):
         summary.add_hdf_seg(seg.xstrm_id, all_parents, include_seg=include_seg)
 
         my_id = np.int(seg.xstrm_id)
-        # Create a HDF5 group for the given ID number
-        grp = f.create_group(str(my_id))
+
+        try:
+            # Create a HDF5 group for the given ID number
+            grp = f.create_group(str(my_id))
+        except Exception as e:
+            e = f"Duplicate ID, {my_id} group already exists in hdf."
+            sys.exit(e)
+
         np_all_parents = np.zeros(len(all_parents), dtype=np.int) + all_parents
 
         # Create dataset for parent list, compress only if effective (>256 parents)

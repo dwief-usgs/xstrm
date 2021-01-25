@@ -22,7 +22,7 @@ Terminology
 -----------
 * Segment: The smallest unit represented within a stream network. This could represent a stream segment (i.e. line segment) or local drainage unit (i.e. polygon).
 
-* Network: All stream segments that relate to a given segment, where the relationship can be specified as all segments that flow to the segment of interest (i.e. upstream) or all segments that recieve flow from the segment of interest (i.e. downstream).
+* Network: All stream segments that relate to a given segment, where the relationship can be specified as all segments that flow to the segment of interest (i.e. upstream) or all segments that receive flow from the segment of interest (i.e. downstream).
 
 * Children: In upstream implementations children are segments directly downstream of the segment of interest.  In downstream implementations children are segments directly upstream of the segment of interest.
 
@@ -30,7 +30,7 @@ Terminology
 
 * NHDPlus: The National Hydrography Dataset Plus network is commonly used to represent streams in the United States. There are several versions of this dataset, each having slightly different schemas.
 
-* Downstream implementation: Building a relationship between a segment and all (downstream) segments that recieve flow from the segment of interest.
+* Downstream implementation: Building a relationship between a segment and all (downstream) segments that receive flow from the segment of interest.
 
 * Upstream implementation: Building a relationship between a segment and all (upstream) segments that flow to the segment of interest.
 
@@ -39,11 +39,13 @@ Currently Included
 ------------------
 * Python methods (build_network.py, network_calc.py, xstrm.py) and command line tool (network_calculator.py) to support upstream or downstream summaries of information attributed to local stream segments or drainages. Summary types currently supported include sum, min, max, or weighted average.
 
-* Ability to export a complete network to hdf5 file format.
+* Ability to export a complete network to hdf5 file format. Note, networks are exported using index values to improve processing efficiency and reduce size of the hdf5 file.
 
 * For a given network return all upstream or downstream segment or drainage identifiers.
 
 * A mock network is included in tests folder for convenience of testing and understanding functionality. An image of the network, diagram_of_test_data.JPG, along with network data, test_local_data.csv, are included.
+
+* common_networks folder, contains processing steps for commonly used stream networks such as NHDPlusV2.1.
 
 Requirements
 ------------
@@ -57,7 +59,7 @@ Soon users will be able to pip install from main branch using the below command.
 * pip install git+https://github.com/dwief-usgs/xstrm.git
 
 
-All of the examples below will run as-is assuming the file, 'tests/test_local_data.csv', is locally accessible in a folder named 'tests' under the working directory. These data coorespond to the test network depicted in the file 'diagram_of_test_data.jpg'.  These data contain network to/from nodes alongside local data and expected data and therefore 'drop_cols' parameter is required to help remove unneeded information. 
+All of the examples below will run as-is assuming the file, 'tests/test_local_data.csv', is locally accessible in a folder named 'tests' under the working directory. These data correspond to the test network depicted in the file 'diagram_of_test_data.jpg'.  These data contain network to/from nodes alongside local data and expected data and therefore 'drop_cols' parameter is required to help remove unneeded information. 
 
 **Example 1**  Using the network calculator command line tool. The network calculator is intended to simplify use of xstrm methods.  The calculator has been tested in Linux command line and anaconda prompt on Windows.
 
@@ -66,7 +68,7 @@ All of the examples below will run as-is assuming the file, 'tests/test_local_da
     # Access the help menu to see all parameter options and brief description of each
     python -m xstrm.network_calculator --help
 
-    # Example of how to run the code. This example uses the 'test_local_data.csv' where both network and local data are available.  The process runs a 'sum' calculation by default on 'var1' and 'var2' columns of data.  Note, a number of columns are included in the csv that depict results and therefor we need to specificy drop_cols so that all columns are not calculated. 
+    # Example of how to run the code. This example uses the 'test_local_data.csv' where both network and local data are available.  The process runs a 'sum' calculation by default on 'var1' and 'var2' columns of data.  Note, a number of columns are included in the csv that depict results and therefor we need to specify drop_cols so that all columns are not calculated. 
     python -m xstrm.network_calculator --to_from_csv=tests/test_local_data.csv --local_data_csv=tests/test_local_data.csv --id_col_name=seg_id --to_node_col=down_node --from_node_col=up_node --weight_col_name=area --drop_cols=["up_node","down_node","up_area","max_var1","max_var2","min_var1","min_var2","sum_var1","sum_var2","weighted_var1","weighted_var2","up_only_sum_var1","mn_var1","mn_var2"]
 
 
@@ -97,9 +99,9 @@ All of the examples below will run as-is assuming the file, 'tests/test_local_da
     )
 
     # Print lists of segments with multiple parents, segments with one parent, and segments with no parents. Note in this example a parent represents upstream segments.  To/From nodes can be flipped in Example 2a to return parents representing downstream segments.
-    print (f"List of segment indicies with multiple parents: {network.multi_parent_ids}.")
-    print (f"List of segment indicies with one parent: {network.one_parent_ids}.")
-    print (f"List of segment indicies with no parents: {network.no_parent_ids}.")
+    print (f"List of segment indices with multiple parents: {network.multi_parent_ids}.")
+    print (f"List of segment indices with one parent: {network.one_parent_ids}.")
+    print (f"List of segment indices with no parents: {network.no_parent_ids}.")
 
     # Print relationship between index value ('xstrm_id') and user submitted identifier ('seg_id')
     print (build_network_data[1])
@@ -109,9 +111,9 @@ All of the examples below will run as-is assuming the file, 'tests/test_local_da
 
 .. code-block::
 
-    List of segment indicies with multiple parents: [3, 6, 14, 7, 8, 10, 9, 11, 12, 13, 16].
-    List of segment indicies with one parent: [1, 2, 4, 5, 15, 17].
-    List of segment indicies with no parents: [].
+    List of segment indices with multiple parents: [3, 6, 14, 7, 8, 10, 9, 11, 12, 13, 16].
+    List of segment indices with one parent: [1, 2, 4, 5, 15, 17].
+    List of segment indices with no parents: [].
 
         seg_id  xstrm_id
     0      01         1
